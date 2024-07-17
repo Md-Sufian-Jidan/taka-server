@@ -11,8 +11,8 @@ const options = {
         "http://localhost:5173",
         "http://localhost:5174",
     ],
-    credentials: true,
-    optionSuccessStatus: 200,
+    // credentials: true,
+    // optionSuccessStatus: 200,
 }
 //middlewares
 app.use(cors(options));
@@ -31,9 +31,11 @@ const client = new MongoClient(uri, {
     }
 });
 
-const usersCollections = client.db('taka-swift').collection('users');
 async function run() {
     try {
+        await client.connect();
+        const usersCollections = client.db('taka-swift').collection('users');
+
 
         // jwt related api
         app.post('/jwt', async (req, res) => {
@@ -45,18 +47,17 @@ async function run() {
         // USER DATA SAVE APi
         app.post('/save-user', async (req, res) => {
             const user = req.body;
-            const finalUser = { ...user, role: "user" }
+            // const finalUser = { ...user, role: "user" }
             const query = { email: user.email };
             const existingUser = await usersCollections.findOne(query);
             if (existingUser) {
                 return res.send({ message: 'user already exists', insertedId: null })
             }
-            const result = await usersCollections.insertOne(finalUser);
+            const result = await usersCollections.insertOne(user);
             res.send(result);
         });
 
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
